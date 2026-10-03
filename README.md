@@ -1,5 +1,6 @@
 # Claude Anti-Ban & Telemetry Cleaner 🐍 (Python Edition)
 
+[![Latest Release](https://img.shields.io/github/v/release/RengoCode/claude-cleaner?color=brightgreen&label=Release)](https://github.com/RengoCode/claude-cleaner/releases)
 [![Python 3.8+](https://img.shields.io/badge/Python-3.8+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![GUI & CLI](https://img.shields.io/badge/Interface-GUI%20%7C%20CLI-blue.svg)]()
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-0%20(Pure%20Stdlib)-success.svg)]()
@@ -9,7 +10,7 @@
 
 > **Cross-platform Python implementation with both Graphical User Interface (GUI) and Command-Line Interface (CLI). Cleans hardware identifiers, deep telemetry, and account linkages across Claude Desktop & Claude Code CLI while keeping your local sessions 100% safe.**
 
-[🇷🇺 Читать на русском языке](README.ru.md) • [⚡ Main Branch (Native Windows & Linux/macOS Shell)](../../tree/main)
+[🇷🇺 Читать на русском языке](README.ru.md) • [⚡ Main Branch (Native Shell)](../../tree/main) • [⭐ Star on GitHub](https://github.com/RengoCode/claude-cleaner)
 
 ---
 
