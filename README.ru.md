@@ -1,14 +1,15 @@
 # Claude Anti-Ban & Telemetry Cleaner 🛡️
 
+[![Latest Release](https://img.shields.io/github/v/release/RengoCode/claude-cleaner?color=brightgreen&label=Release)](https://github.com/RengoCode/claude-cleaner/releases)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)]()
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-0%20(Pure%20Native)-success.svg)]()
 [![Languages](https://img.shields.io/badge/Languages-EN%20%7C%20RU-blue.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python Branch](https://img.shields.io/badge/Branch-Python%20Engine-brightgreen.svg)](../../tree/python)
+[![Python Branch](https://img.shields.io/badge/Branch-Python%20GUI%20%26%20CLI-brightgreen.svg)](../../tree/python)
 
 > **Очистка идентификаторов оборудования, глубокой телеметрии и привязок аккаунтов в Claude Desktop и Claude Code CLI с полным сохранением ваших локальных сессий, истории проектов и закладок.**
 
-[🇬🇧 Read in English](README.md) • [🐍 Ветка с Python-версией](../../tree/python)
+[🇬🇧 Read in English](README.md) • [🐍 Ветка с Python-версией (с GUI)](../../tree/python) • [⭐ Поддержать проект на GitHub](https://github.com/RengoCode/claude-cleaner)
 
 ---
 
