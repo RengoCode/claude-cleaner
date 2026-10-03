@@ -1,0 +1,38 @@
+name: Bug Report
+description: Create a report to help us improve Claude Anti-Ban Cleaner
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the details below.
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: What OS are you running on?
+      options:
+        - Windows 11 / 10
+        - macOS (Apple Silicon / Intel)
+        - Linux (Ubuntu, Debian, Fedora, Arch, etc.)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Claude Desktop / CLI Version
+      placeholder: e.g. Claude Desktop 0.8.x, Claude Code CLI 0.2.x
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe what bug occurred.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Terminal Output / Error Logs
+      description: Paste any error messages or stack traces here.
+      render: shell

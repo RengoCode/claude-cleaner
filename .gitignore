@@ -1,0 +1,20 @@
+# Backups and archives
+backups/
+*.zip
+*.tar.gz
+*.bak
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+.venv
+env/
+venv/
+
+# Temporary / OS
+.DS_Store
+Thumbs.db
+*.log

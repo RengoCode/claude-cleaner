@@ -1,0 +1,72 @@
+name: CI & Cross-Platform Tests
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  python-tests:
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Validate syntax compilation
+        run: |
+          python -m py_compile claude_reset.py
+          python -m py_compile test_claude_reset.py
+
+      - name: Run unit test suite
+        run: |
+          python -m unittest test_claude_reset.py -v
+
+      - name: Test CLI arguments
+        run: |
+          python claude_reset.py --help
+          python claude_reset.py --status
+
+  shell-checks:
+    name: Shell & PowerShell Validation
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate PowerShell Scripts
+        shell: pwsh
+        run: |
+          $errors = 0
+          Get-ChildItem -Filter *.ps1 | ForEach-Object {
+            Write-Host "Validating $($_.Name)..."
+            $tokens = $null
+            $parseErrors = $null
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$parseErrors)
+            if ($parseErrors.Count -gt 0) {
+              Write-Error "Syntax errors in $($_.Name): $parseErrors"
+              $errors++
+            } else {
+              Write-Host "  [OK] $($_.Name) syntax is clean."
+            }
+          }
+          if ($errors -gt 0) { exit 1 }
+
+      - name: Validate Bash Scripts
+        shell: bash
+        run: |
+          bash -n claude-reset.sh
+          echo "claude-reset.sh syntax is valid."
