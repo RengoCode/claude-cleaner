@@ -1,4 +1,4 @@
-name: CI & Cross-Platform Tests
+name: CI & Native Script Validation
 
 on:
   push:
@@ -8,46 +8,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  python-tests:
-    name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Validate syntax compilation
-        run: |
-          python -m py_compile claude_reset.py
-          python -m py_compile test_claude_reset.py
-
-      - name: Run unit test suite
-        run: |
-          python -m unittest test_claude_reset.py -v
-
-      - name: Test CLI arguments
-        run: |
-          python claude_reset.py --help
-          python claude_reset.py --status
-
-  shell-checks:
-    name: Shell & PowerShell Validation
+  powershell-checks:
+    name: PowerShell Validation on Windows
     runs-on: windows-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate PowerShell Scripts
+      - name: Validate PowerShell Syntax (AST)
         shell: pwsh
         run: |
           $errors = 0
@@ -60,13 +28,34 @@ jobs:
               Write-Error "Syntax errors in $($_.Name): $parseErrors"
               $errors++
             } else {
-              Write-Host "  [OK] $($_.Name) syntax is clean."
+              Write-Host "  [OK] $($_.Name) syntax is valid."
             }
           }
           if ($errors -gt 0) { exit 1 }
 
-      - name: Validate Bash Scripts
-        shell: bash
+      - name: Test PowerShell Dry-Run Execution
+        shell: pwsh
+        run: |
+          .\Claude-Reset.ps1 -DryRun -Auto
+
+  bash-checks:
+    name: Bash Validation on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Bash Syntax
         run: |
           bash -n claude-reset.sh
           echo "claude-reset.sh syntax is valid."
+
+      - name: Test Bash Help & Dry-Run Execution
+        run: |
+          chmod +x claude-reset.sh
+          ./claude-reset.sh --help
+          ./claude-reset.sh --dry-run --auto

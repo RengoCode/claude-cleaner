@@ -1,6 +1,6 @@
 # ==============================================================================
-# Claude Anti-Ban & Telemetry Cleaner v1.1.0
-# Device ID reset, deep telemetry sanitizer & privacy utility (CLI & Desktop)
+# Claude Anti-Ban & Telemetry Cleaner
+# Universal native PowerShell reset & privacy utility for Windows (0 dependencies)
 # Bilingual support: English & Russian
 # ==============================================================================
 
@@ -10,6 +10,7 @@ param(
     [switch]$WipeSessions,
     [switch]$LaunchAfter,
     [switch]$DryRun,
+    [switch]$CreateShortcuts,
     [ValidateSet("en", "ru")][string]$Lang
 )
 
@@ -56,11 +57,12 @@ $script:I18N = @{
         "Menu4" = "[4] 🛡️ Создать только резервную копию файлов"
         "Menu5" = "[5] 🔄 Восстановить из резервной копии"
         "Menu6" = "[6] ⚠️ Полный Factory Reset (сброс ID + удаление всех локальных сессий)"
+        "MenuShortcuts" = "[S] 📌 Создать ярлыки на Рабочем столе и в Пуск"
         "Menu7" = "[7] 📁 Открыть папку с резервными копиями"
         "Menu8" = "[8] ▶️ Запустить Claude Desktop"
         "MenuLang" = "[L] 🌐 Switch Language / Сменить язык (EN / RU)"
         "Menu0" = "[0] ❌ Выход"
-        "Prompt" = "Введите номер действия [1-8, L, 0]: "
+        "Prompt" = "Введите номер действия [1-8, S, L, 0]: "
         "ConfirmSafe" = "Будут сброшены идентификаторы устройства и телеметрия.`nСессии и диалоги БУДУТ СОХРАНЕНЫ.`nПродолжить? (Y/N): "
         "ConfirmFullWarn" = "ВНИМАНИЕ: Будут удалены все локальные сессии Claude Code!"
         "ConfirmFullPrompt" = "Для подтверждения полного сброса введите 'YES': "
@@ -78,6 +80,7 @@ $script:I18N = @{
         "BackupSaved" = "Резервная копия сохранена в:"
         "LaunchPrompt" = "Желаете запустить Claude Desktop сейчас? (Y/N): "
         "DryRunNotice" = "[ТЕСТОВЫЙ РЕЖИМ] Изменения не будут записаны на диск."
+        "ShortcutsCreated" = "Ярлыки успешно созданы на Рабочем столе и в меню «Пуск»."
     }
     "en" = @{
         "Title" = "CLAUDE ANTI-BAN & DEVICE ID RESET UTILITY"
@@ -89,11 +92,12 @@ $script:I18N = @{
         "Menu4" = "[4] 🛡️ Create Safety Backup ZIP Now"
         "Menu5" = "[5] 🔄 Restore From Backup"
         "Menu6" = "[6] ⚠️ Full Factory Reset (Reset IDs + Wipe All Sessions)"
+        "MenuShortcuts" = "[S] 📌 Create Desktop & Start Menu Shortcuts"
         "Menu7" = "[7] 📁 Open Backups Directory"
         "Menu8" = "[8] ▶️ Launch Claude Desktop"
         "MenuLang" = "[L] 🌐 Switch Language / Сменить язык (EN / RU)"
         "Menu0" = "[0] ❌ Exit"
-        "Prompt" = "Enter option [1-8, L, 0]: "
+        "Prompt" = "Enter option [1-8, S, L, 0]: "
         "ConfirmSafe" = "Hardware identifiers and deep telemetry will be reset.`nSessions and chats WILL BE PRESERVED.`nProceed? (Y/N): "
         "ConfirmFullWarn" = "WARNING: All local Claude Code sessions and chat turns will be deleted!"
         "ConfirmFullPrompt" = "Type 'YES' to confirm full factory reset: "
@@ -111,6 +115,7 @@ $script:I18N = @{
         "BackupSaved" = "Safety backup saved at:"
         "LaunchPrompt" = "Would you like to launch Claude Desktop now? (Y/N): "
         "DryRunNotice" = "[DRY-RUN MODE] No changes will be written to disk."
+        "ShortcutsCreated" = "Shortcuts successfully created on Desktop and Start Menu."
     }
 }
 
@@ -153,7 +158,7 @@ $claudeExePath = "$env:LOCALAPPDATA\AnthropicClaude\claude.exe"
 $script:Utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 
 function Write-Header {
-    Clear-Host
+    try { [System.Console]::Clear() } catch {}
     Write-Host "======================================================================" -ForegroundColor Cyan
     Write-Host "            $(Get-Msg 'Title')                " -ForegroundColor Yellow
     Write-Host "      $(Get-Msg 'Sub')   " -ForegroundColor White
@@ -199,6 +204,41 @@ function Stop-ClaudeProcesses {
         Start-Sleep -Seconds 1
     }
     Write-Host "[+] $(Get-Msg 'ProcTerminated')" -ForegroundColor Green
+}
+
+function Install-Shortcuts {
+    $desktopPath = [Environment]::GetFolderPath('Desktop')
+    $startMenuPath = Join-Path ([Environment]::GetFolderPath('StartMenu')) "Programs"
+    $wscript = New-Object -ComObject WScript.Shell
+
+    $claudeExe = "$env:LOCALAPPDATA\AnthropicClaude\claude.exe"
+    $claudeAppIco = "$env:LOCALAPPDATA\AnthropicClaude\app.ico"
+    $iconPath = if (Test-Path $claudeExe) { $claudeExe } elseif (Test-Path $claudeAppIco) { $claudeAppIco } else { "shell32.dll,238" }
+
+    $targetCmd = Join-Path $scriptDir "Claude-Reset.cmd"
+    if (-not (Test-Path $targetCmd)) {
+        $targetCmd = Join-Path $scriptDir "Claude-Reset.ps1"
+    }
+
+    # 1. Desktop
+    $scDesktop = $wscript.CreateShortcut((Join-Path $desktopPath "Claude Reset.lnk"))
+    $scDesktop.TargetPath = $targetCmd
+    $scDesktop.WorkingDirectory = $scriptDir
+    $scDesktop.IconLocation = "$iconPath,0"
+    $scDesktop.Description = "Claude Anti-Ban & Telemetry Reset Utility"
+    $scDesktop.Save()
+
+    # 2. Start Menu
+    $scStart = $wscript.CreateShortcut((Join-Path $startMenuPath "Claude Reset.lnk"))
+    $scStart.TargetPath = $targetCmd
+    $scStart.WorkingDirectory = $scriptDir
+    $scStart.IconLocation = "$iconPath,0"
+    $scStart.Description = "Claude Anti-Ban & Telemetry Reset Utility"
+    $scStart.Save()
+
+    Write-Host "`n[+] $(Get-Msg 'ShortcutsCreated')" -ForegroundColor Green
+    Write-Host "    Desktop:    $desktopPath\Claude Reset.lnk" -ForegroundColor Cyan
+    Write-Host "    Start Menu: $startMenuPath\Claude Reset.lnk`n" -ForegroundColor Cyan
 }
 
 function New-ClaudeBackup {
@@ -381,21 +421,21 @@ function Perform-Reset {
     }
 
     # Clear CLI telemetry event queue & stats
-    if (Test-Path $cliTelemetryDir -and -not $DryRun) {
+    if ((Test-Path $cliTelemetryDir) -and (-not $DryRun)) {
         $events = Get-ChildItem -Path $cliTelemetryDir -Filter "1p_failed_events.*.json" -ErrorAction SilentlyContinue
         if ($events) {
             $events | Remove-Item -Force -ErrorAction SilentlyContinue
             Write-Host "  [v] Cleared CLI telemetry event queue ($($events.Count) files)." -ForegroundColor Green
         }
     }
-    if (Test-Path $cliStatsCache -and -not $DryRun) {
+    if ((Test-Path $cliStatsCache) -and (-not $DryRun)) {
         try {
             Set-SafeFileContent -Path $cliStatsCache -Content '{"version":4,"dailyActivity":[]}'
             Write-Host "  [v] Cleared CLI stats-cache.json." -ForegroundColor Green
         } catch {}
     }
     foreach ($df in @($cliDaemonStatus, $cliDaemonCooldown)) {
-        if (Test-Path $df -and -not $DryRun) {
+        if ((Test-Path $df) -and (-not $DryRun)) {
             Remove-Item -Path $df -Force -ErrorAction SilentlyContinue
         }
     }
@@ -403,17 +443,17 @@ function Perform-Reset {
     # 5. Desktop Application (%APPDATA%\Claude)
     Write-Host (Get-Msg 'Step3') -ForegroundColor Cyan
     if (Test-Path $appDataClaude) {
-        if (Test-Path $desktopAntDid -and -not $DryRun) {
+        if ((Test-Path $desktopAntDid) -and (-not $DryRun)) {
             Remove-Item -Path $desktopAntDid -Force -ErrorAction SilentlyContinue
             Write-Host "  [v] Removed ant-did (Claude Desktop will generate a fresh clean ID on start)." -ForegroundColor Green
         }
 
-        if (Test-Path $desktopAntRegistry -and -not $DryRun) {
+        if ((Test-Path $desktopAntRegistry) -and (-not $DryRun)) {
             Remove-Item -Path $desktopAntRegistry -Force -ErrorAction SilentlyContinue
             Write-Host "  [v] Removed ant-device-registry.json (hardware-to-account bindings severed)." -ForegroundColor Green
         }
 
-        if (Test-Path $desktopRemoteControl -and -not $DryRun) {
+        if ((Test-Path $desktopRemoteControl) -and (-not $DryRun)) {
             Remove-Item -Path $desktopRemoteControl -Force -ErrorAction SilentlyContinue
             Write-Host "  [v] Removed remote-control-state.json." -ForegroundColor Green
         }
@@ -428,7 +468,7 @@ function Perform-Reset {
         }
 
         foreach ($bf in @($desktopBridgeState, $desktopBuddyTokens)) {
-            if (Test-Path $bf -and -not $DryRun) {
+            if ((Test-Path $bf) -and (-not $DryRun)) {
                 Remove-Item -Path $bf -Force -ErrorAction SilentlyContinue
                 Write-Host "  [v] Cleared $($bf | Split-Path -Leaf)." -ForegroundColor Green
             }
@@ -476,14 +516,14 @@ function Perform-Reset {
 
     # 7. Deep telemetry: plan-usage-history, Local State, Crashpad
     Write-Host (Get-Msg 'Step5') -ForegroundColor Cyan
-    if (Test-Path $desktopPlanUsage -and -not $DryRun) {
+    if ((Test-Path $desktopPlanUsage) -and (-not $DryRun)) {
         try {
             Set-SafeFileContent -Path $desktopPlanUsage -Content '{"history":[]}'
             Write-Host "  [v] Sanitized plan-usage-history.json (purged historical Org UUID tracking)." -ForegroundColor Green
         } catch {}
     }
 
-    if (Test-Path $desktopLocalState -and -not $DryRun) {
+    if ((Test-Path $desktopLocalState) -and (-not $DryRun)) {
         try {
             $lsContent = [System.IO.File]::ReadAllText($desktopLocalState, [System.Text.Encoding]::UTF8)
             $lsJson = $lsContent | ConvertFrom-Json
@@ -497,12 +537,12 @@ function Perform-Reset {
     }
 
     foreach ($dbF in @($desktopPerfDb, $desktopPerfJournal)) {
-        if (Test-Path $dbF -and -not $DryRun) {
+        if ((Test-Path $dbF) -and (-not $DryRun)) {
             Remove-Item -Path $dbF -Force -ErrorAction SilentlyContinue
         }
     }
 
-    if (Test-Path $desktopCrashpad -and -not $DryRun) {
+    if ((Test-Path $desktopCrashpad) -and (-not $DryRun)) {
         $dumps = Get-ChildItem -Path $desktopCrashpad -Recurse -Filter "*.dmp" -ErrorAction SilentlyContinue
         if ($dumps) {
             $dumps | Remove-Item -Force -ErrorAction SilentlyContinue
@@ -513,7 +553,7 @@ function Perform-Reset {
     # 8. Sessions handling & logs
     Write-Host (Get-Msg 'Step6') -ForegroundColor Cyan
     if ($WipeSessions) {
-        if (Test-Path $desktopSessionsDir -and -not $DryRun) {
+        if ((Test-Path $desktopSessionsDir) -and (-not $DryRun)) {
             $sessDirs = Get-ChildItem -Path $desktopSessionsDir -Directory -ErrorAction SilentlyContinue
             if ($sessDirs) {
                 $sessDirs | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
@@ -527,7 +567,7 @@ function Perform-Reset {
         }
     }
 
-    if (Test-Path $desktopSentryDir -and -not $DryRun) {
+    if ((Test-Path $desktopSentryDir) -and (-not $DryRun)) {
         $sentryFiles = Get-ChildItem -Path $desktopSentryDir -Recurse -File -ErrorAction SilentlyContinue
         if ($sentryFiles) {
             $sentryFiles | Remove-Item -Force -ErrorAction SilentlyContinue
@@ -535,7 +575,7 @@ function Perform-Reset {
         }
     }
 
-    if (Test-Path $desktopLogsDir -and -not $DryRun) {
+    if ((Test-Path $desktopLogsDir) -and (-not $DryRun)) {
         $logFiles = Get-ChildItem -Path $desktopLogsDir -Filter "*.log" -ErrorAction SilentlyContinue
         if ($logFiles) {
             $logFiles | Remove-Item -Force -ErrorAction SilentlyContinue
@@ -714,6 +754,12 @@ function Switch-Language {
     } catch {}
 }
 
+# Shortcut only mode
+if ($CreateShortcuts) {
+    Install-Shortcuts
+    exit 0
+}
+
 # Auto mode
 if ($Auto) {
     Perform-Reset
@@ -735,6 +781,7 @@ do {
     Write-Host "  $(Get-Msg 'Menu4')" -ForegroundColor Yellow
     Write-Host "  $(Get-Msg 'Menu5')" -ForegroundColor Magenta
     Write-Host "  $(Get-Msg 'Menu6')" -ForegroundColor Red
+    Write-Host "  $(Get-Msg 'MenuShortcuts')" -ForegroundColor DarkCyan
     Write-Host "  $(Get-Msg 'Menu7')" -ForegroundColor Gray
     Write-Host "  $(Get-Msg 'Menu8')" -ForegroundColor White
     Write-Host "  $(Get-Msg 'MenuLang')" -ForegroundColor Cyan
@@ -782,6 +829,10 @@ do {
                 Write-Host (Get-Msg 'Cancelled') -ForegroundColor DarkGray
                 Start-Sleep -Milliseconds 600
             }
+        }
+        "S" {
+            Install-Shortcuts
+            Pause
         }
         "7" {
             Start-Process explorer.exe $backupRootDir

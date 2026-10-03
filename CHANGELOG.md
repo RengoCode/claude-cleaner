@@ -5,12 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-10-04
+
+### Changed
+- **Minimalist & Universal Repository Structure (`main`)**:
+  - The `main` branch is now 100% native with zero prerequisites (PowerShell for Windows, pure Bash for macOS/Linux).
+  - Python implementation moved to dedicated [`python`](../../tree/python) branch for cleaner separation and maximum out-of-the-box compatibility.
+  - Replaced multiple separate batch and PowerShell scripts with unified `Claude-Reset.cmd` and `Claude-Reset.ps1`.
+  - Integrated shortcut creation directly into `Claude-Reset.ps1` (`[S]` menu item and `-CreateShortcuts` switch).
+  - Rewrote `claude-reset.sh` to be 100% pure native Bash (using standard system tools `openssl`/`urandom`/`sed`/`pkill`), removing all Python dependencies on macOS/Linux.
+- **Documentation Refactoring**:
+  - Separated monolithic bilingual README into mirror-identical `README.md` (English) and `README.ru.md` (Russian).
+  - Added instant header language switchers eliminating inconvenient long-scrolling.
+  - Full parity of matrices, tables, and quick-start instructions across both languages.
+
+---
+
 ## [1.1.0] - 2026-10-03
 
 ### Added
 - **Internationalization (i18n)**:
   - Full multilingual support in `claude_reset.py`: **English**, **Russian**, **Spanish**, and **Simplified Chinese**.
-  - Bilingual support in native PowerShell utility `Claude-AntiBan-Reset.ps1` (**English** and **Russian**).
+  - Bilingual support in native PowerShell utility `Claude-Reset.ps1` (**English** and **Russian**).
   - Auto-detection of system UI culture and persistent language settings (`~/.claude-cleaner/language.txt`).
   - Interactive language switcher `[L]` accessible directly from the main menu.
   - `--lang` CLI flag (`en`, `ru`, `es`, `zh`).
@@ -22,44 +38,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `declarative_performance_observer.db`: clears internal Electron SQLite performance observer database.
   - `daemon-auth-status.json` and `daemon-auth-cooldown`: resets background daemon session tokens.
 - **Hardware & Fingerprint Audit**:
-  - `--inspect` flag and menu option `[3]` for deep audit of OS Machine GUID (Windows Registry `HKLM\SOFTWARE\Microsoft\Cryptography\MachineGuid`, macOS `IOPlatformUUID`, Linux `/etc/machine-id`) and account association risk factors.
+  - `--inspect` flag and menu option for deep audit of OS Machine GUID and account association risk factors.
 - **Dry-Run Simulation**:
-  - `--dry-run` flag in Python and `-DryRun` switch in PowerShell to preview planned actions without modifying any files.
-- **Expanded Test Suite**:
-  - Unit tests for multilingual key completeness across all 4 languages.
-  - Unit tests for deep telemetry sanitization and dry-run safety.
+  - `-DryRun` switch in PowerShell and `--dry-run` flag in Bash to preview planned actions without modifying any files.
 
 ---
 
 ## [1.0.0] - 2026-10-03
 
 ### Added
-- **Cross-Platform Python Engine (`claude_reset.py`)**:
-  - Full support for Windows, macOS, and Linux without any external `pip` dependencies.
-  - Automatic timestamped ZIP safety backups before any modifications.
+- **Native Windows & Shell Engines**:
+  - Automatic timestamped safety backups before any modifications.
   - Safe Anti-Ban reset mode preserving all user chat histories and pins in `claude-code-sessions`.
   - Full Factory Reset mode (`--full`) with confirmation guards.
   - Interactive terminal UI with color support.
-  - CLI flags: `--safe`, `--full`, `--status`, `--backup`, `--restore`, `--launch`.
-- **Windows Integration**:
-  - `Claude-AntiBan-Reset.cmd` 1-click batch launcher.
-  - `Claude-AntiBan-Reset.ps1` PowerShell utility with terminal menu.
-  - `create_shortcuts.cmd` & `create_shortcuts.ps1` for Desktop and Start Menu shortcut generation.
-- **macOS & Linux Integration**:
-  - `claude-reset.sh` universal shell launcher.
 - **Telemetry & Identity Matrix**:
   - CLI: `machineID` (SHA-256), `userID` (SHA-256), `anonymousId` (`claudecode_*`), clearing `1p_failed_events.*.json`.
   - Desktop: Unlinking cryptographic `ant-did` cookie and `ant-device-registry.json` keys to allow clean regeneration.
   - Telemetry: Clearing `sentry/`, `logs/`, `bridge-state.json`, `remote-control-state.json`, `buddy-tokens.json`, and rotating `ccd-ids.json` salt.
   - Desktop Config: Sanitizing stale OAuth token caches, `lastKnownAccountUuid`, and updating activation timestamps.
-- **Test Suite & CI**:
-  - `test_claude_reset.py` unit and mock integration tests with `unittest`.
-  - Multi-OS GitHub Actions CI workflow (`.github/workflows/ci.yml`) testing on Python 3.8 - 3.13 across Windows, Ubuntu, and macOS.
 
 ### Fixed
 - **Electron UTF-8 BOM Bug**:
-  - Fixed syntax crash (`SyntaxError: Unexpected token '﻿', "﻿{..." is not valid JSON`) by enforcing UTF-8 No-BOM encoding on all JSON write operations.
-- **Session Preservation**:
-  - Fixed unintentional loss of Claude Code sessions by isolating session removal behind explicit opt-in flags.
-- **Cryptographic Key Invalidation**:
-  - Fixed invalid `{}` JSON format in `ant-device-registry.json` by unlinking the file, allowing Claude Desktop to sign genuine fresh keys on startup.
+  - Enforced UTF-8 No-BOM across all file modifications to prevent Electron JSON parsing syntax crashes (`SyntaxError: Unexpected token '﻿'`).
