@@ -956,6 +956,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Claude Anti-Ban & Telemetry Cleaner - Cross-platform hardware ID reset & privacy tool."
     )
+    parser.add_argument("--gui", action="store_true", help="Launch Graphical User Interface (GUI).")
     parser.add_argument("--safe", action="store_true", help="Perform safe anti-ban reset (preserves sessions).")
     parser.add_argument("--full", action="store_true", help="Perform full factory reset (wipes session records).")
     parser.add_argument("--backup", action="store_true", help="Create a backup zip archive without modifying files.")
@@ -968,6 +969,15 @@ def main():
 
     args = parser.parse_args()
     paths = ClaudePaths()
+
+    if args.gui:
+        try:
+            import claude_reset_gui
+            claude_reset_gui.main()
+            return
+        except Exception as e:
+            print(f"{Colors.RED}Failed to launch GUI: {e}{Colors.RESET}")
+            sys.exit(1)
 
     active_lang = args.lang or paths.get_language()
     if args.lang:
